@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "This is Kittens Carousel is a static website application deployed with Apache Web Server on AWS Elastic Compute Cloud (EC2) Instance using AWS Cloudformation Service."
+  
+Parameters:
+  LatestAMIId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  
+Resources:
+  Vural-Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAMIId
+      InstanceType: t2.micro
+      SecurityGroups: 
+      Keyname: workpc
+        - !Ref WebSecurityHttp-SSH
+      Tags:
+        - Key: "Name"
+          Value: "Web Server of StackName"
+      UserData: |
+        #!/bin/bash
+        # Install Apache Server and Git Files (Kittens Carousel Static Website HTML, PNG) from EC2 Instance and Git 
+        yum install httpd -y
+        yum update httpd -y
+        yum install git -y
+        systemctl start httpd
+        systemctl enable httpd
+        cd /var/www/html
+        wget https://github.com/VuralEnsar/Kittens_Carousel_Static_Website/blob/main/static-web/index.html
+        wget https://github.com/VuralEnsar/Kittens_Carousel_Static_Website/blob/main/static-web/cat0.png
+        wget https://github.com/VuralEnsar/Kittens_Carousel_Static_Website/blob/main/static-web/cat1.png
+        wget https://github.com/VuralEnsar/Kittens_Carousel_Static_Website/blob/main/static-web/cat2.png
+        systemctl restart httpd
+
+  WebSecurityHttp-SSH:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "This is Apache Web Server Sec Group"
+      GroupName: "ApacheWebSecGroup"
+      SecurityGroupIngress: #SSH and HTTP
+      - IpProtocol: ssh
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: HTTP
+        FromPort: 80
+        ToPort: 80
+        CidrIp: 0.0.0.0/0
+Outputs:
+  PublicIP:
+    Description: "Application Website URL"
+    Value: !GetAtt Vural-Instance.PublicIP
+    
